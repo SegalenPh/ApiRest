@@ -12,18 +12,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 var films = [{
-    id:1,
+    id:'1',
     nom: 'Godzilla',
-    comments : 'test'
+    comment : 'test'
 },{
-    id:2,
+    id:'2',
     nom: 'Starwars',
-    comments : []
+    comment : []
 }];
 
 var users = [{
-    username: 'toto',
-    pwd: 'toto'
+    username: 'toto'
 }];
 var tokens = [];
 
@@ -52,10 +51,13 @@ var checkToken = function (token) {
 router.route('/films')
         .post(function(req, res) {
         if(!findFilm(req.params.films)){
-            films.push(films);
+            var film = {
+                nom : req.params.nom,
+                comment : req.params.comment
+            }
+            films.push(film);
             res.status(201);
             res.send({message:'film created'});
-            res.end(JSON.stringify(films));
         } else {
             res.status(401);
             res.send({message:'film already exist'});
@@ -70,13 +72,13 @@ router.route('/films').get(function (req, res) {
 
 router.route('/films:id/comments')
     .get(function (req, res) {
-        res.end(JSON.stringify(findFilm(req.params.id).comments));
+        res.end(JSON.stringify(findFilm(req.params.id).comment));
     });
 
 
 router.route('/films:id/comments')
     .post(function (req, res) {
-        film.comment = req.body.comment;
+        film.comment = req.params.comment;
         film.save(function (err) {
             if (err)
                 res.send(err);
@@ -85,7 +87,7 @@ router.route('/films:id/comments')
         });
     });
 
-router.route('/film/id')
+router.route('/films:id')
     .delete(function(req, res) {
         Film.remove({
             id: req.params.id
@@ -96,7 +98,7 @@ router.route('/film/id')
         });
     });
 
-router.route('/film/id/comments')
+router.route('/films:id/comments')
     .delete(function(req, res) {
             Film.remove({
             comment: req.params.comment
@@ -107,7 +109,7 @@ router.route('/film/id/comments')
         });
     });
 
-router.route('/film/id/comments')
+router.route('/films:id/comments')
     .put(function(req, res) {
         Film.findById(req.params.id, function(err, film) {
             if (err)
