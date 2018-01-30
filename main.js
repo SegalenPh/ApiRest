@@ -4,45 +4,69 @@ var app = express();
 var http = require('http').Server(app);
 var router = express.Router();
 var bodyParser = require('body-parser');
-var mongoose   = require('mongoose');
-var Film = require('./app/models/film');
-
-
-
+//var mongoose   = require('mongoose');
+//var Film = require('./app/models/film');
+//var mongo = require('./mongo.js');
+app.use('/api', router);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+var films = [{
+    id:1,
+    nom: 'Godzilla',
+    comments : 'test'
+},{
+    id:2,
+    nom: 'Starwars',
+    comments : []
+}];
 
-router.use(function(req, res, next) {
-    console.log('Something is happening.');
-    next();
-});
+var users = [{
+    username: 'toto',
+    pwd: 'toto'
+}];
+var tokens = [];
 
-router.get('/', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });
-});
+
+var findFilm = function (filmId) {
+    for (var i = 0 ; i < films.length; i++){
+        if(films[i.nom === filmId]){
+            return films[i];
+        }
+    }
+    return null;
+}
+
+var checkToken = function (token) {
+    for (var i = 0 ; i < tokens.length; i++){
+        if(tokens[i.nom === token]){
+            return tokens[i];
+        }
+    }
+    return false;
+}
+
+
+
 
 router.route('/films')
         .post(function(req, res) {
-        var film = new Film();
-        film.nom = req.body.nom;
-        film.save(function(err) {
-            if (err)
-                res.send(err);
-            res.json({ message: 'Film créé!' });
-        });
+        if(!findFilm(req.params.films)){
+            films.push(films);
+            res.status(201);
+            res.send({message:'film created'});
+            res.end(JSON.stringify(films));
+        } else {
+            res.status(401);
+            res.send({message:'film already exist'});
+        }
     });
 
 
-router.route('/films').get(function (req, res)
-{
-    Film.find(function (err, films) {
-        if (err)
-            res.send(err);
-        res.json(films)});
-    });
+router.route('/films').get(function (req, res) {
+    res.end(JSON.stringify(films))
+});
 
-app.use('/api', router);
 
 router.route('/films:id/comments')
     .get(function (req, res) {
@@ -97,11 +121,80 @@ router.route('/film/id/comments')
         });
     });
 
+router.route('/signup')
+    .post(function(req, res){
+    var username = req.param('username', null);
+    var pwd = req.param('pwd', null);
+    console.log('signup '+username);
+    if(!username || !pwd || username == 'undefined' || pwd == 'undefined'){
+        res.status(400);
+        res.send("error, username or pwd undefined");
+    } else {
+        client.get(username, function(err, reply) {
+            // reply is null when the key is missing
+            if(reply == null){
+                client.set(username, pwd);//TODO hash
+                var u = {
+                    username:username,
+                    date : new Date().getTime()
+                }
+                users.push(u);
+                res.status(200);
+                res.send();
+            } else {
+                res.status(401);
+                res.send('user already exist');
+            }
+        });
+    }
+});
 
+router.route('/signin').post(function(req, res){
+    var username = req.param('username', null);
+    var pwd = req.param('pwd', null);
+    console.log('signin ' + username);
+    if(!username || !pwd || username == 'undefined' || pwd == 'undefined'){
+        console.log('signin username||pwd null' + username +' || ' + pwd);
+        res.status(400);
+        res.send("error");
+    } else {
+        if (users.
+            client.get(username, function(err, reply){
+                if(reply != pwd){
+                    console.log('signin username||pwd null' + username +' || ' + pwd);
+                    res.status(401);
+                    res.send("error");
+                } else {
+                    var token =  generateToken();
+                    tokens.push(token);
+                    res.send('{"token":"'+token+'"}');
+
+                }
+            }));
+    }
+});
+router.route('/users')
+    .get(function(req, res){
+    var token = req.header('token', null);
+    if(checkToken(token)){
+        client.get(token, function(err, reply){
+            if(reply){
+                res.status(200);
+                res.send(JSON.stringify(users));
+            } else {
+                res.status(401);
+                res.send('token invalid');
+            }
+        });
+    }else {
+        res.status(401);
+        res.send('token invalid');
+    }
+});
 
 
 // Connect to the db
-mongoose.connect('mongodb://localhost:27017/filmBase');
+//mongo.connect("mongodb://localhost:27017/filmBase")
 
 http.listen(8080, function () {
     console.log("server started");
