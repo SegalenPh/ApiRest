@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 //var mongoose   = require('mongoose');
 //var Film = require('./app/models/film');
 //var mongo = require('./mongo.js');
+//var uri = mongodb://uxduhln559zbrzc:MBcFjWgaAXK5rB0mTTlJ@btumnsgbiwiocs2-mongodb.services.clever-cloud.com:27017/btumnsgbiwiocs2;e
 app.use('/api', router);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -55,7 +56,7 @@ router.route('/films')
                 nom : req.params.nom,
                 comment : req.params.comment
             }
-            films.push(film);
+            films.save(film);
             res.status(201);
             res.send({message:'film created'});
         } else {
@@ -115,7 +116,7 @@ router.route('/films:id/comments')
             if (err)
                 res.send(err);
             film.comment = req.body.comment;
-            film.save(function(err) {
+            film.push(function(err) {
                 if (err)
                     res.send(err);
                 res.json({ message: 'Film mis à jour!' });
@@ -195,8 +196,12 @@ router.route('/users')
 });
 
 
-// Connect to the db
-//mongo.connect("mongodb://localhost:27017/filmBase")
+/**mongo.connect(uri, dbName, function(){
+    console.log("MongoDB connected");
+    http.listen(8080, ()=>{
+        console.log("server started");
+    };
+})*/
 
 http.listen(8080, function () {
     console.log("server started");
